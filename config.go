@@ -33,7 +33,8 @@ const defaultConfig = `
 		"vmware-vmx": "packer-builder-vmware-vmx",
 		"parallels-iso": "packer-builder-parallels-iso",
 		"parallels-pvm": "packer-builder-parallels-pvm",
-		"null": "packer-builder-null"
+		"null": "packer-builder-null",
+		"docker-ssh": "packer-builder-docker_ssh"
 	},
 
 	"commands": {
