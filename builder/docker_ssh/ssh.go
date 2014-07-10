@@ -1,4 +1,4 @@
-package null
+package docker_ssh
 
 import (
 	gossh "code.google.com/p/go.crypto/ssh"
@@ -6,12 +6,19 @@ import (
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/communicator/ssh"
 	"io/ioutil"
+	"log"
+	"os/exec"
 )
 
 // SSHAddress returns a function that can be given to the SSH communicator
 // for determining the SSH address
-func SSHAddress(host string, port int) func(multistep.StateBag) (string, error) {
+func SSHAddress(port int) func(multistep.StateBag) (string, error) {
 	return func(state multistep.StateBag) (string, error) {
+		containerId := state.Get("container_id").(string)
+		host, err := exec.Command("docker", "inspect", "--format", "{{ .NetworkSettings.IPAddress }}", containerId).Output()
+		if err != nil {
+			log.Fatal(err)
+		}
 		return fmt.Sprintf("%s:%d", host, port), nil
 	}
 }

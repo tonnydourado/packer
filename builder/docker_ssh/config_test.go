@@ -1,4 +1,4 @@
-package null
+package docker_ssh
 
 import (
 	"testing"
@@ -6,9 +6,8 @@ import (
 
 func testConfig() map[string]interface{} {
 	return map[string]interface{}{
-		"host":         "foo",
-		"ssh_username": "bar",
-		"ssh_password": "baz",
+		"export_path": "foo",
+		"image":       "bar",
 	}
 }
 
@@ -42,68 +41,50 @@ func testConfigOk(t *testing.T, warns []string, err error) {
 	}
 }
 
-func TestConfigPrepare_port(t *testing.T) {
+func TestConfigPrepare_exportPath(t *testing.T) {
 	raw := testConfig()
 
-	// default port should be 22
-	delete(raw, "port")
+	// No export path
+	delete(raw, "export_path")
+	_, warns, errs := NewConfig(raw)
+	testConfigErr(t, warns, errs)
+
+	// Good export path
+	raw["export_path"] = "good"
+	_, warns, errs = NewConfig(raw)
+	testConfigOk(t, warns, errs)
+}
+
+func TestConfigPrepare_image(t *testing.T) {
+	raw := testConfig()
+
+	// No image
+	delete(raw, "image")
+	_, warns, errs := NewConfig(raw)
+	testConfigErr(t, warns, errs)
+
+	// Good image
+	raw["image"] = "path"
+	_, warns, errs = NewConfig(raw)
+	testConfigOk(t, warns, errs)
+}
+
+func TestConfigPrepare_pull(t *testing.T) {
+	raw := testConfig()
+
+	// No pull set
+	delete(raw, "pull")
 	c, warns, errs := NewConfig(raw)
-	if c.Port != 22 {
-		t.Fatalf("bad: port should default to 22, not %d", c.Port)
+	testConfigOk(t, warns, errs)
+	if !c.Pull {
+		t.Fatal("should pull by default")
 	}
+
+	// Pull set
+	raw["pull"] = false
+	c, warns, errs = NewConfig(raw)
 	testConfigOk(t, warns, errs)
-}
-
-func TestConfigPrepare_host(t *testing.T) {
-	raw := testConfig()
-
-	// No host
-	delete(raw, "host")
-	_, warns, errs := NewConfig(raw)
-	testConfigErr(t, warns, errs)
-
-	// Good host
-	raw["host"] = "good"
-	_, warns, errs = NewConfig(raw)
-	testConfigOk(t, warns, errs)
-}
-
-func TestConfigPrepare_sshUsername(t *testing.T) {
-	raw := testConfig()
-
-	// No ssh_username
-	delete(raw, "ssh_username")
-	_, warns, errs := NewConfig(raw)
-	testConfigErr(t, warns, errs)
-
-	// Good ssh_username
-	raw["ssh_username"] = "good"
-	_, warns, errs = NewConfig(raw)
-	testConfigOk(t, warns, errs)
-}
-
-func TestConfigPrepare_sshCredential(t *testing.T) {
-	raw := testConfig()
-
-	// no ssh_password and no ssh_private_key_file
-	delete(raw, "ssh_password")
-	delete(raw, "ssh_private_key_file")
-	_, warns, errs := NewConfig(raw)
-	testConfigErr(t, warns, errs)
-
-	// only ssh_password
-	raw["ssh_password"] = "good"
-	_, warns, errs = NewConfig(raw)
-	testConfigOk(t, warns, errs)
-
-	// only ssh_private_key_file
-	raw["ssh_private_key_file"] = "good"
-	delete(raw, "ssh_password")
-	_, warns, errs = NewConfig(raw)
-	testConfigOk(t, warns, errs)
-
-	// both ssh_password and ssh_private_key_file set
-	raw["ssh_password"] = "bad"
-	_, warns, errs = NewConfig(raw)
-	testConfigErr(t, warns, errs)
+	if c.Pull {
+		t.Fatal("should not pull")
+	}
 }

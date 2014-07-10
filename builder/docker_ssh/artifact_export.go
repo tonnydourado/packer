@@ -1,29 +1,32 @@
-package null
+package docker_ssh
 
 import (
 	"fmt"
+	"os"
 )
 
-// dummy Artifact implementation - does nothing
-type NullArtifact struct {
+// ExportArtifact is an Artifact implementation for when a container is
+// exported from docker into a single flat file.
+type ExportArtifact struct {
+	path string
 }
 
-func (*NullArtifact) BuilderId() string {
+func (*ExportArtifact) BuilderId() string {
 	return BuilderId
 }
 
-func (a *NullArtifact) Files() []string {
-	return []string{}
+func (a *ExportArtifact) Files() []string {
+	return []string{a.path}
 }
 
-func (*NullArtifact) Id() string {
-	return "Null"
+func (*ExportArtifact) Id() string {
+	return "Container"
 }
 
-func (a *NullArtifact) String() string {
-	return fmt.Sprintf("Did not export anything. This is the null builder")
+func (a *ExportArtifact) String() string {
+	return fmt.Sprintf("Exported Docker file: %s", a.path)
 }
 
-func (a *NullArtifact) Destroy() error {
-	return nil
+func (a *ExportArtifact) Destroy() error {
+	return os.Remove(a.path)
 }

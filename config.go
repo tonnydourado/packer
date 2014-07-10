@@ -34,7 +34,7 @@ const defaultConfig = `
 		"parallels-iso": "packer-builder-parallels-iso",
 		"parallels-pvm": "packer-builder-parallels-pvm",
 		"null": "packer-builder-null",
-		"docker-ssh": "packer-builder-docker_ssh"
+		"docker_ssh": "packer-builder-docker_ssh"
 	},
 
 	"commands": {

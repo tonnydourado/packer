@@ -1,4 +1,4 @@
-package null
+package docker_ssh
 
 import (
 	"fmt"
@@ -9,7 +9,11 @@ import (
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 
-	Host              string `mapstructure:"host"`
+	ExportPath string `mapstructure:"export_path"`
+	Image      string
+	Pull       bool
+	RunCommand []string `mapstructure:"run_command"`
+
 	Port              int    `mapstructure:"port"`
 	SSHUsername       string `mapstructure:"ssh_username"`
 	SSHPassword       string `mapstructure:"ssh_password"`
@@ -33,16 +37,58 @@ func NewConfig(raws ...interface{}) (*Config, []string, error) {
 	c.tpl.UserVars = c.PackerUserVars
 
 	// Defaults
+	if len(c.RunCommand) == 0 {
+		c.RunCommand = []string{
+			"run",
+			"-d", //"-i", "-t",
+			"-v", "{{.Volumes}}",
+			"{{.Image}}",
+			"/sbin/init",
+		}
+	}
+
+	// Default Pull if it wasn't set
+	hasPull := false
+	for _, k := range md.Keys {
+		if k == "Pull" {
+			hasPull = true
+			break
+		}
+	}
+
+	if !hasPull {
+		c.Pull = true
+	}
+
+	// Default ssh port
 	if c.Port == 0 {
 		c.Port = 22
 	}
-	// (none so far)
 
 	errs := common.CheckUnusedConfig(md)
 
-	if c.Host == "" {
+	templates := map[string]*string{
+		"export_path": &c.ExportPath,
+		"image":       &c.Image,
+	}
+
+	for n, ptr := range templates {
+		var err error
+		*ptr, err = c.tpl.Process(*ptr, nil)
+		if err != nil {
+			errs = packer.MultiErrorAppend(
+				errs, fmt.Errorf("Error processing %s: %s", n, err))
+		}
+	}
+
+	if c.ExportPath == "" {
 		errs = packer.MultiErrorAppend(errs,
-			fmt.Errorf("host must be specified"))
+			fmt.Errorf("export_path must be specified"))
+	}
+
+	if c.Image == "" {
+		errs = packer.MultiErrorAppend(errs,
+			fmt.Errorf("image must be specified"))
 	}
 
 	if c.SSHUsername == "" {

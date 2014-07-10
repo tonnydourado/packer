@@ -1,4 +1,4 @@
-package null
+package docker_ssh
 
 import (
 	"github.com/mitchellh/packer/packer"

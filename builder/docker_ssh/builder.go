@@ -1,4 +1,4 @@
-package null
+package docker_ssh
 
 import (
 	"github.com/mitchellh/multistep"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const BuilderId = "packer.docker_ssh"
+const BuilderId = "packer.docker"
 
 type Builder struct {
 	config *Config
@@ -26,13 +26,23 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, error) {
 }
 
 func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packer.Artifact, error) {
+	driver := &DockerDriver{Tpl: b.config.tpl, Ui: ui}
+	if err := driver.Verify(); err != nil {
+		return nil, err
+	}
+
 	steps := []multistep.Step{
+		&StepTempDir{},
+		&StepPull{},
+		&StepRun{},
 		&common.StepConnectSSH{
-			SSHAddress:     SSHAddress(b.config.Host, b.config.Port),
+			SSHAddress:     SSHAddress(b.config.Port),
 			SSHConfig:      SSHConfig(b.config.SSHUsername, b.config.SSHPassword, b.config.SSHPrivateKeyFile),
 			SSHWaitTimeout: 1 * time.Minute,
 		},
 		&common.StepProvision{},
+		// &StepProvision{},
+		&StepExport{},
 	}
 
 	// Setup the state bag and initial state for the steps
@@ -40,6 +50,9 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	state.Put("config", b.config)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
+
+	// Setup the driver that will talk to Docker
+	state.Put("driver", driver)
 
 	// Run!
 	if b.config.PackerDebug {
@@ -59,7 +72,7 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	}
 
 	// No errors, must've worked
-	artifact := &NullArtifact{}
+	artifact := &ExportArtifact{path: b.config.ExportPath}
 	return artifact, nil
 }
 
