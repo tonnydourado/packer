@@ -36,3 +36,32 @@ test: deps
 	go test ./...
 
 .PHONY: all clean deps format test updatedeps
+
+docker-gopath:
+	@test -z "`docker ps -a | grep gopath`" && \
+	docker run -d --name gopath -v /gopath ubuntu:14.04 true || \
+	$(ECHO) "$(OK_COLOR)==> 'gopath' volume container already exists$(NO_COLOR)"
+
+docker-deps: docker-gopath
+	@docker run -t -i --rm=true \
+	--volumes-from gopath \
+	-v `pwd`:/gopath/src/github.com/mitchellh/packer \
+	-m=1g \
+	google/golang \
+	/bin/bash -c 'go get -u github.com/mitchellh/gox && cd /gopath/src/github.com/mitchellh/packer && make deps'
+
+docker: docker-deps
+	@docker run -t -i --rm=true \
+	--volumes-from gopath \
+	-v `pwd`:/gopath/src/github.com/mitchellh/packer \
+	-m=1g \
+	google/golang \
+	/bin/bash -c 'cd /gopath/src/github.com/mitchellh/packer && make'
+
+docker-test: docker-gopath
+	@docker run -t -i --rm=true \
+	--volumes-from gopath \
+	-v `pwd`:/gopath/src/github.com/mitchellh/packer \
+	-m=1g \
+	google/golang \
+	/bin/bash -c 'cd /gopath/src/github.com/mitchellh/packer && make test'
