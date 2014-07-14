@@ -2,9 +2,12 @@ package docker_ssh
 
 import (
 	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/builder/docker"
+	"github.com/mitchellh/packer/builder/null"
 	"github.com/mitchellh/packer/common"
 	"github.com/mitchellh/packer/packer"
 	"log"
+	"reflect"
 	"time"
 )
 
@@ -16,6 +19,14 @@ type Builder struct {
 }
 
 func (b *Builder) Prepare(raws ...interface{}) ([]string, error) {
+
+	for k, v := range raws {
+		log.Println("Type: ", reflect.TypeOf(v))
+		for l, u := range v {
+			log.Println("key:", l, "value:", u)
+		}
+	}
+
 	c, warnings, errs := NewConfig(raws...)
 	if errs != nil {
 		return warnings, errs
@@ -32,18 +43,35 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	}
 
 	steps := []multistep.Step{
-		&StepTempDir{},
-		&StepPull{},
+		&docker.StepTempDir{},
+		&docker.StepPull{},
 		&StepRun{},
 		&common.StepConnectSSH{
 			SSHAddress:     SSHAddress(b.config.Port),
-			SSHConfig:      SSHConfig(b.config.SSHUsername, b.config.SSHPassword, b.config.SSHPrivateKeyFile),
+			SSHConfig:      null.SSHConfig(b.config.SSHUsername, b.config.SSHPassword, b.config.SSHPrivateKeyFile),
 			SSHWaitTimeout: 1 * time.Minute,
 		},
 		&common.StepProvision{},
-		// &StepProvision{},
 		&StepExport{},
 	}
+
+	// // Convert docker_ssh.Config to docker.Config
+	// log.Println("ExportPath: ", b.config.ExportPath)
+	// log.Println("Image: ", b.config.Image)
+	// log.Println("Pull: ", b.config.Pull)
+	// log.Println("RunCommand: ", b.config.RunCommand)
+
+	// raw_config := map[string]interface{}{
+	// 	"ExportPath": b.config.ExportPath,
+	// 	"Image":
+	// }
+
+	// docker_config, _, _ := docker.NewConfig()
+
+	// log.Println("ExportPath: ", docker_config.ExportPath)
+	// log.Println("Image: ", docker_config.Image)
+	// log.Println("Pull: ", docker_config.Pull)
+	// log.Println("RunCommand: ", docker_config.RunCommand)
 
 	// Setup the state bag and initial state for the steps
 	state := new(multistep.BasicStateBag)
