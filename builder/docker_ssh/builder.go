@@ -7,10 +7,10 @@ import (
 	"github.com/mitchellh/packer/common"
 	"github.com/mitchellh/packer/packer"
 	"log"
-	"reflect"
 	"time"
 )
 
+// Using the same BuilderID as the docker builder, so the docker-import post-processor will work for us, too:
 const BuilderId = "packer.docker"
 
 type Builder struct {
@@ -19,14 +19,6 @@ type Builder struct {
 }
 
 func (b *Builder) Prepare(raws ...interface{}) ([]string, error) {
-
-	for k, v := range raws {
-		log.Println("Type: ", reflect.TypeOf(v))
-		for l, u := range v {
-			log.Println("key:", l, "value:", u)
-		}
-	}
-
 	c, warnings, errs := NewConfig(raws...)
 	if errs != nil {
 		return warnings, errs
@@ -37,14 +29,14 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, error) {
 }
 
 func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packer.Artifact, error) {
-	driver := &DockerDriver{Tpl: b.config.tpl, Ui: ui}
+	driver := &docker.DockerDriver{Tpl: b.config.tpl, Ui: ui}
 	if err := driver.Verify(); err != nil {
 		return nil, err
 	}
 
 	steps := []multistep.Step{
 		&docker.StepTempDir{},
-		&docker.StepPull{},
+		&StepPull{},
 		&StepRun{},
 		&common.StepConnectSSH{
 			SSHAddress:     SSHAddress(b.config.Port),
@@ -54,24 +46,6 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 		&common.StepProvision{},
 		&StepExport{},
 	}
-
-	// // Convert docker_ssh.Config to docker.Config
-	// log.Println("ExportPath: ", b.config.ExportPath)
-	// log.Println("Image: ", b.config.Image)
-	// log.Println("Pull: ", b.config.Pull)
-	// log.Println("RunCommand: ", b.config.RunCommand)
-
-	// raw_config := map[string]interface{}{
-	// 	"ExportPath": b.config.ExportPath,
-	// 	"Image":
-	// }
-
-	// docker_config, _, _ := docker.NewConfig()
-
-	// log.Println("ExportPath: ", docker_config.ExportPath)
-	// log.Println("Image: ", docker_config.Image)
-	// log.Println("Pull: ", docker_config.Pull)
-	// log.Println("RunCommand: ", docker_config.RunCommand)
 
 	// Setup the state bag and initial state for the steps
 	state := new(multistep.BasicStateBag)

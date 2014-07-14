@@ -3,6 +3,7 @@ package docker_ssh
 import (
 	"fmt"
 	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/builder/docker"
 	"github.com/mitchellh/packer/packer"
 	"os"
 )
@@ -12,7 +13,7 @@ type StepExport struct{}
 
 func (s *StepExport) Run(state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
-	driver := state.Get("driver").(Driver)
+	driver := state.Get("driver").(docker.Driver)
 	containerId := state.Get("container_id").(string)
 	ui := state.Get("ui").(packer.Ui)
 

@@ -3,6 +3,7 @@ package docker_ssh
 import (
 	"fmt"
 	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/builder/docker"
 	"github.com/mitchellh/packer/packer"
 )
 
@@ -12,11 +13,11 @@ type StepRun struct {
 
 func (s *StepRun) Run(state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
-	driver := state.Get("driver").(Driver)
+	driver := state.Get("driver").(docker.Driver)
 	tempDir := state.Get("temp_dir").(string)
 	ui := state.Get("ui").(packer.Ui)
 
-	runConfig := ContainerConfig{
+	runConfig := docker.ContainerConfig{
 		Image:      config.Image,
 		RunCommand: config.RunCommand,
 		Volumes: map[string]string{
@@ -45,7 +46,7 @@ func (s *StepRun) Cleanup(state multistep.StateBag) {
 		return
 	}
 
-	driver := state.Get("driver").(Driver)
+	driver := state.Get("driver").(docker.Driver)
 	ui := state.Get("ui").(packer.Ui)
 
 	// Kill the container. We don't handle errors because errors usually
