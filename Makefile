@@ -50,7 +50,7 @@ docker-deps: docker-gopath
 	google/golang \
 	/bin/bash -c 'go get -u github.com/mitchellh/gox && cd /gopath/src/github.com/mitchellh/packer && make deps'
 
-docker: docker-deps
+docker: docker-gopath
 	@docker run -t -i --rm=true \
 	--volumes-from gopath \
 	-v `pwd`:/gopath/src/github.com/mitchellh/packer \
