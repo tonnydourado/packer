@@ -6,8 +6,10 @@ import (
 
 func testConfig() map[string]interface{} {
 	return map[string]interface{}{
-		"export_path": "foo",
-		"image":       "bar",
+		"export_path":  "foo",
+		"image":        "bar",
+		"ssh_password": "docker.io",
+ 		"ssh_username": "root",
 	}
 }
 

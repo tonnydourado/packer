@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/builder/docker"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -34,7 +35,7 @@ func TestStepExport(t *testing.T) {
 
 	config := state.Get("config").(*Config)
 	config.ExportPath = tf.Name()
-	driver := state.Get("driver").(*MockDriver)
+	driver := state.Get("driver").(*docker.MockDriver)
 	driver.ExportReader = bytes.NewReader([]byte("data!"))
 
 	// run the step
@@ -79,7 +80,7 @@ func TestStepExport_error(t *testing.T) {
 
 	config := state.Get("config").(*Config)
 	config.ExportPath = tf.Name()
-	driver := state.Get("driver").(*MockDriver)
+	driver := state.Get("driver").(*docker.MockDriver)
 	driver.ExportError = errors.New("foo")
 
 	// run the step

@@ -3,6 +3,7 @@ package docker_ssh
 import (
 	"errors"
 	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/builder/docker"
 	"testing"
 )
 
@@ -22,7 +23,7 @@ func TestStepRun(t *testing.T) {
 	defer step.Cleanup(state)
 
 	config := state.Get("config").(*Config)
-	driver := state.Get("driver").(*MockDriver)
+	driver := state.Get("driver").(*docker.MockDriver)
 	driver.StartID = "foo"
 
 	// run the step
@@ -69,7 +70,7 @@ func TestStepRun_error(t *testing.T) {
 	step := new(StepRun)
 	defer step.Cleanup(state)
 
-	driver := state.Get("driver").(*MockDriver)
+	driver := state.Get("driver").(*docker.MockDriver)
 	driver.StartError = errors.New("foo")
 
 	// run the step

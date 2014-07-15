@@ -2,6 +2,7 @@ package docker_ssh
 
 import (
 	"errors"
+	"github.com/mitchellh/packer/builder/docker"
 	"github.com/mitchellh/multistep"
 	"testing"
 )
@@ -16,7 +17,7 @@ func TestStepPull(t *testing.T) {
 	defer step.Cleanup(state)
 
 	config := state.Get("config").(*Config)
-	driver := state.Get("driver").(*MockDriver)
+	driver := state.Get("driver").(*docker.MockDriver)
 
 	// run the step
 	if action := step.Run(state); action != multistep.ActionContinue {
@@ -37,7 +38,7 @@ func TestStepPull_error(t *testing.T) {
 	step := new(StepPull)
 	defer step.Cleanup(state)
 
-	driver := state.Get("driver").(*MockDriver)
+	driver := state.Get("driver").(*docker.MockDriver)
 	driver.PullError = errors.New("foo")
 
 	// run the step
@@ -59,7 +60,7 @@ func TestStepPull_noPull(t *testing.T) {
 	config := state.Get("config").(*Config)
 	config.Pull = false
 
-	driver := state.Get("driver").(*MockDriver)
+	driver := state.Get("driver").(*docker.MockDriver)
 
 	// run the step
 	if action := step.Run(state); action != multistep.ActionContinue {
